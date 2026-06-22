@@ -52,6 +52,8 @@ const adminRoutes = require('./routes/adminRoutes');
 const newsletterRoutes = require('./routes/newsletterRoutes');
 const bannerRoutes = require('./routes/bannerRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
+const customInquiryRoutes = require('./routes/customInquiryRoutes');
+const couponRoutes = require('./routes/couponRoutes');
 
 // Basic Route
 app.get('/api/health', (req, res) => {
@@ -74,6 +76,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/banners', bannerRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/custom-inquiries', customInquiryRoutes);
+app.use('/api/coupons', couponRoutes);
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {

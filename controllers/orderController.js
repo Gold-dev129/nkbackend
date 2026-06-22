@@ -1,5 +1,6 @@
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const Coupon = require('../models/Coupon');
 const { sendOrderConfirmationEmail } = require('../utils/email');
 
 // @desc    Create new order
@@ -14,7 +15,8 @@ exports.addOrderItems = async (req, res, next) => {
       itemsPrice,
       shippingPrice,
       totalPrice,
-      email
+      email,
+      couponCode
     } = req.body;
 
     if (!orderItems || orderItems.length === 0) {
@@ -43,6 +45,29 @@ exports.addOrderItems = async (req, res, next) => {
 
     const orderUser = req.user ? req.user._id : null;
 
+    let discount = 0;
+    let appliedCode = '';
+
+    if (couponCode) {
+      const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
+      if (!coupon || !coupon.isValid()) {
+        return res.status(400).json({ status: 'error', message: 'Applied coupon is invalid or has expired' });
+      }
+      
+      if (coupon.discountType === 'percentage') {
+        discount = (itemsPrice * coupon.discountAmount) / 100;
+      } else {
+        discount = Math.min(coupon.discountAmount, itemsPrice);
+      }
+      appliedCode = coupon.code;
+      
+      // Update coupon usage count
+      coupon.usedCount += 1;
+      await coupon.save();
+    }
+
+    const finalTotalPrice = itemsPrice + shippingPrice - discount;
+
     // Create order in database
     const order = new Order({
       user: orderUser,
@@ -52,7 +77,9 @@ exports.addOrderItems = async (req, res, next) => {
       paymentMethod,
       itemsPrice,
       shippingPrice,
-      totalPrice
+      totalPrice: finalTotalPrice,
+      couponApplied: appliedCode,
+      discountAmount: discount
     });
 
     const createdOrder = await order.save();
