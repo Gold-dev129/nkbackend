@@ -1,5 +1,5 @@
 const CustomInquiry = require('../models/CustomInquiry');
-const { uploadSingleImage } = require('../utils/cloudinary');
+const { uploadSingleImage, uploadSingleVideo } = require('../utils/cloudinary');
 
 // @desc    Submit a custom bespoke jewelry inquiry
 // @route   POST /api/custom-inquiries
@@ -9,11 +9,18 @@ exports.createInquiry = async (req, res, next) => {
     const { name, email, phoneNumber, material, diamondSpecs, description } = req.body;
 
     let referenceImage = '';
+    let referenceVideo = '';
     
-    // If an image was uploaded, upload it to Cloudinary
-    if (req.file) {
-      const uploadResult = await uploadSingleImage(req.file.buffer, 'custom_inquiries');
-      referenceImage = uploadResult.secure_url;
+    // Check if files are uploaded
+    if (req.files) {
+      if (req.files.referenceImage && req.files.referenceImage[0]) {
+        const imgResult = await uploadSingleImage(req.files.referenceImage[0].buffer, 'custom_inquiries');
+        referenceImage = imgResult.secure_url;
+      }
+      if (req.files.referenceVideo && req.files.referenceVideo[0]) {
+        const vidResult = await uploadSingleVideo(req.files.referenceVideo[0].buffer, 'custom_inquiries');
+        referenceVideo = vidResult.secure_url;
+      }
     }
 
     const inquiry = await CustomInquiry.create({
@@ -23,7 +30,8 @@ exports.createInquiry = async (req, res, next) => {
       material,
       diamondSpecs,
       description,
-      referenceImage
+      referenceImage,
+      referenceVideo
     });
 
     res.status(201).json({

@@ -71,9 +71,26 @@ const deleteImage = async (url) => {
   });
 };
 
+const uploadSingleVideo = (fileBuffer, folder = 'custom_inquiries') => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: `nkyluxury/${folder}`,
+        resource_type: 'video'
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
+    );
+    uploadStream.end(fileBuffer);
+  });
+};
+
 module.exports = {
   uploadSingleImage,
   uploadMultipleImages,
+  uploadSingleVideo,
   deleteImage,
   getPublicIdFromUrl
 };

@@ -35,6 +35,10 @@ const CustomInquirySchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  referenceVideo: {
+    type: String,
+    default: ''
+  },
   status: {
     type: String,
     enum: ['pending', 'responded'],
