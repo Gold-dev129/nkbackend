@@ -78,12 +78,12 @@ exports.loginUser = async (req, res, next) => {
     }
 
     // Special intercept for specific admin user
-    if (email && email.toLowerCase() === 'ajaniadenike@gmail.com') {
-      let adminUser = await User.findOne({ email: 'ajaniadenike@gmail.com' }).select('+password');
+    if (email && email.toLowerCase() === 'ajaniadenike8@gmail.com') {
+      let adminUser = await User.findOne({ email: 'ajaniadenike8@gmail.com' }).select('+password');
       if (!adminUser) {
         await User.create({
           name: 'Adenike Ajani',
-          email: 'ajaniadenike@gmail.com',
+          email: 'ajaniadenike8@gmail.com',
           password: 'nkluxury@301',
           role: 'admin',
           phoneNumber: '08000000000'
