@@ -1,6 +1,6 @@
 const Product = require('../models/Product');
 const Category = require('../models/Category');
-const { uploadMultipleImages, deleteImage } = require('../utils/cloudinary');
+const { uploadMultipleImages, deleteImage, uploadSingleVideo } = require('../utils/cloudinary');
 
 // @desc    Get all products with filters, search, sorting and pagination
 // @route   GET /api/products
@@ -150,10 +150,16 @@ exports.createProduct = async (req, res, next) => {
 
     // Upload multiple images to Cloudinary
     let imageUrls = [];
-    if (req.files && req.files.length > 0) {
-      imageUrls = await uploadMultipleImages(req.files, 'products');
+    if (req.files && req.files.images) {
+      imageUrls = await uploadMultipleImages(req.files.images, 'products');
     } else {
       return res.status(400).json({ status: 'error', message: 'Please upload at least one product image' });
+    }
+
+    let finalVideo = video || '';
+    if (req.files && req.files.videoFile && req.files.videoFile[0]) {
+      const vidResult = await uploadSingleVideo(req.files.videoFile[0].buffer, 'products');
+      finalVideo = vidResult.secure_url;
     }
 
     const product = await Product.create({
@@ -172,7 +178,7 @@ exports.createProduct = async (req, res, next) => {
       newArrival: newArrival === 'true',
       isCustom: isCustom === 'true' || isCustom === true,
       images: imageUrls,
-      video: video || ''
+      video: finalVideo
     });
 
     res.status(201).json({
@@ -209,12 +215,11 @@ exports.updateProduct = async (req, res, next) => {
     if (updateData.isCustom !== undefined) updateData.isCustom = updateData.isCustom === 'true' || updateData.isCustom === true;
 
     // Handle Image uploads
-    if (req.files && req.files.length > 0) {
+    if (req.files && req.files.images) {
       // Upload new images to Cloudinary
-      const newUrls = await uploadMultipleImages(req.files, 'products');
+      const newUrls = await uploadMultipleImages(req.files.images, 'products');
       
       // If user wants to replace completely or append
-      // By default, we will append them or replace if specified
       if (req.body.replaceImages === 'true') {
         // Delete all old images from Cloudinary
         const deletePromises = product.images.map(imgUrl => deleteImage(imgUrl));
@@ -223,6 +228,12 @@ exports.updateProduct = async (req, res, next) => {
       } else {
         updateData.images = [...product.images, ...newUrls];
       }
+    }
+
+    // Handle Video upload
+    if (req.files && req.files.videoFile && req.files.videoFile[0]) {
+      const vidResult = await uploadSingleVideo(req.files.videoFile[0].buffer, 'products');
+      updateData.video = vidResult.secure_url;
     }
 
     // If deleting specific images by URL

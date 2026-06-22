@@ -22,8 +22,14 @@ router.get('/:slug', getProductBySlug);
 router.use(protect);
 router.use(authorize('admin'));
 
-router.post('/', upload.array('images', 5), createProduct);
-router.put('/:id', upload.array('images', 5), updateProduct);
+router.post('/', upload.fields([
+  { name: 'images', maxCount: 5 },
+  { name: 'videoFile', maxCount: 1 }
+]), createProduct);
+router.put('/:id', upload.fields([
+  { name: 'images', maxCount: 5 },
+  { name: 'videoFile', maxCount: 1 }
+]), updateProduct);
 router.delete('/:id', deleteProduct);
 
 module.exports = router;
