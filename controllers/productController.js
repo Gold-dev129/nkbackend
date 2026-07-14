@@ -168,6 +168,7 @@ exports.createProduct = async (req, res, next) => {
       shortDescription,
       category,
       price: Number(price),
+      discountPercentage: req.body.discountPercentage ? Number(req.body.discountPercentage) : 0,
       discountPrice: discountPrice ? Number(discountPrice) : 0,
       stock: Number(stock),
       sku,
@@ -205,8 +206,32 @@ exports.updateProduct = async (req, res, next) => {
 
     // Convert numeric fields if they exist
     if (updateData.price) updateData.price = Number(updateData.price);
-    if (updateData.discountPrice) updateData.discountPrice = Number(updateData.discountPrice);
+    if (updateData.discountPrice !== undefined) updateData.discountPrice = Number(updateData.discountPrice);
+    if (updateData.discountPercentage !== undefined) updateData.discountPercentage = Number(updateData.discountPercentage);
     if (updateData.stock) updateData.stock = Number(updateData.stock);
+
+    // Calculate discountPrice and discountPercentage on update to keep them in sync
+    const price = updateData.price !== undefined ? updateData.price : product.price;
+    if (updateData.discountPercentage !== undefined) {
+      if (updateData.discountPercentage > 0) {
+        updateData.discountPrice = Math.round(price - (price * updateData.discountPercentage / 100));
+      } else {
+        updateData.discountPrice = 0;
+      }
+    } else if (updateData.discountPrice !== undefined) {
+      if (updateData.discountPrice > 0 && price > 0) {
+        updateData.discountPercentage = Math.round(((price - updateData.discountPrice) / price) * 100);
+      } else {
+        updateData.discountPercentage = 0;
+      }
+    } else if (updateData.price !== undefined) {
+      const activePercentage = product.discountPercentage || 0;
+      if (activePercentage > 0) {
+        updateData.discountPrice = Math.round(price - (price * activePercentage / 100));
+      } else if (product.discountPrice > 0) {
+        updateData.discountPercentage = Math.round(((price - product.discountPrice) / price) * 100);
+      }
+    }
 
     // Convert booleans
     if (updateData.featured) updateData.featured = updateData.featured === 'true' || updateData.featured === true;

@@ -6,6 +6,10 @@ const OrderSchema = new mongoose.Schema({
     ref: 'User',
     required: false
   },
+  orderId: {
+    type: String,
+    unique: true
+  },
   email: {
     type: String,
     required: [true, 'Please add an email address']
@@ -24,6 +28,8 @@ const OrderSchema = new mongoose.Schema({
     }
   ],
   shippingAddress: {
+    name: { type: String, required: false },
+    phone: { type: String, required: false },
     street: { type: String, required: true },
     city: { type: String, required: true },
     state: { type: String, required: true },
@@ -87,5 +93,24 @@ const OrderSchema = new mongoose.Schema({
     default: 'Pending'
   }
 }, { timestamps: true });
+
+// Pre-save hook to generate unique Order ID (e.g. NKY-1789)
+OrderSchema.pre('save', async function(next) {
+  if (!this.orderId) {
+    let unique = false;
+    let attempts = 0;
+    while (!unique && attempts < 100) {
+      const randNum = Math.floor(1000 + Math.random() * 9000); // 4-digit number
+      const potentialId = `NKY-${randNum}`;
+      const existing = await mongoose.models.Order.findOne({ orderId: potentialId });
+      if (!existing) {
+        this.orderId = potentialId;
+        unique = true;
+      }
+      attempts++;
+    }
+  }
+  next();
+});
 
 module.exports = mongoose.model('Order', OrderSchema);

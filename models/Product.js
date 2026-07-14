@@ -37,6 +37,10 @@ const ProductSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  discountPercentage: {
+    type: Number,
+    default: 0
+  },
   stock: {
     type: Number,
     required: [true, 'Please add a stock count'],
@@ -89,7 +93,6 @@ const ProductSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// Create product slug before saving
 ProductSchema.pre('save', function(next) {
   if (this.name) {
     this.slug = this.name
@@ -97,6 +100,17 @@ ProductSchema.pre('save', function(next) {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)+/g, '');
   }
+
+  // Handle discount sync on save
+  if (this.discountPercentage > 0) {
+    this.discountPrice = Math.round(this.price - (this.price * this.discountPercentage / 100));
+  } else if (this.discountPrice > 0 && this.price > 0) {
+    this.discountPercentage = Math.round(((this.price - this.discountPrice) / this.price) * 100);
+  } else {
+    this.discountPercentage = 0;
+    this.discountPrice = 0;
+  }
+
   if (typeof next === 'function') {
     next();
   }

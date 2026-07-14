@@ -3,6 +3,22 @@ const Product = require('../models/Product');
 const Coupon = require('../models/Coupon');
 const { sendOrderConfirmationEmail } = require('../utils/email');
 
+// Helper to find order by Mongo ObjectId or custom orderId (NKY-XXXX)
+const findOrder = async (id, populateUser = false) => {
+  let query;
+  if (id && id.startsWith('NKY-')) {
+    query = Order.findOne({ orderId: id });
+  } else if (id && id.match(/^[0-9a-fA-F]{24}$/)) {
+    query = Order.findById(id);
+  } else {
+    query = Order.findOne({ orderId: id });
+  }
+  if (populateUser) {
+    query = query.populate('user', 'name email');
+  }
+  return await query;
+};
+
 // @desc    Create new order
 // @route   POST /api/orders
 // @access  Private
@@ -136,7 +152,7 @@ exports.getMyOrders = async (req, res, next) => {
 // @access  Private
 exports.getOrderById = async (req, res, next) => {
   try {
-    const order = await Order.findById(req.params.id).populate('user', 'name email');
+    const order = await findOrder(req.params.id, true);
 
     if (!order) {
       return res.status(404).json({ status: 'error', message: 'Order not found' });
@@ -173,7 +189,7 @@ exports.updateOrderToPaid = async (req, res, next) => {
       return res.status(400).json({ status: 'error', message: 'Paystack transaction reference is required' });
     }
 
-    const order = await Order.findById(req.params.id);
+    const order = await findOrder(req.params.id);
 
     if (!order) {
       return res.status(404).json({ status: 'error', message: 'Order not found' });
@@ -261,6 +277,26 @@ exports.getPaystackPublicKey = async (req, res, next) => {
 // @access  Private/Admin
 exports.getOrders = async (req, res, next) => {
   try {
+    // Migration: ensure all legacy orders have an orderId
+    const withoutId = await Order.find({ orderId: { $exists: false } });
+    if (withoutId.length > 0) {
+      for (const order of withoutId) {
+        let unique = false;
+        let attempts = 0;
+        while (!unique && attempts < 100) {
+          const randNum = Math.floor(1000 + Math.random() * 9000);
+          const potentialId = `NKY-${randNum}`;
+          const existing = await Order.findOne({ orderId: potentialId });
+          if (!existing) {
+            order.orderId = potentialId;
+            await order.save();
+            unique = true;
+          }
+          attempts++;
+        }
+      }
+    }
+
     const orders = await Order.find()
       .populate('user', 'id name email')
       .sort('-createdAt');
@@ -281,7 +317,7 @@ exports.getOrders = async (req, res, next) => {
 exports.updateOrderStatus = async (req, res, next) => {
   try {
     const { status } = req.body;
-    const order = await Order.findById(req.params.id);
+    const order = await findOrder(req.params.id);
 
     if (!order) {
       return res.status(404).json({ status: 'error', message: 'Order not found' });
@@ -314,7 +350,7 @@ exports.updateOrderStatus = async (req, res, next) => {
 // @access  Private/Admin
 exports.deleteOrder = async (req, res, next) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const order = await findOrder(req.params.id);
 
     if (!order) {
       return res.status(404).json({ status: 'error', message: 'Order not found' });
