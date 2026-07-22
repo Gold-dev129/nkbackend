@@ -14,7 +14,7 @@ const findOrder = async (id, populateUser = false) => {
     query = Order.findOne({ orderId: id });
   }
   if (populateUser) {
-    query = query.populate('user', 'name email');
+    query = query.populate('user', 'name email phoneNumber');
   }
   return await query;
 };
@@ -298,7 +298,7 @@ exports.getOrders = async (req, res, next) => {
     }
 
     const orders = await Order.find()
-      .populate('user', 'id name email')
+      .populate('user', 'id name email phoneNumber')
       .sort('-createdAt');
       
     res.status(200).json({
