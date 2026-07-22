@@ -95,7 +95,7 @@ const OrderSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Pre-save hook to generate unique Order ID (e.g. NKY-1789)
-OrderSchema.pre('save', async function(next) {
+OrderSchema.pre('save', async function() {
   if (!this.orderId) {
     let unique = false;
     let attempts = 0;
@@ -110,7 +110,6 @@ OrderSchema.pre('save', async function(next) {
       attempts++;
     }
   }
-  next();
 });
 
 module.exports = mongoose.model('Order', OrderSchema);
