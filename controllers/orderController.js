@@ -332,6 +332,9 @@ exports.updateOrderStatus = async (req, res, next) => {
     if (status === 'Delivered') {
       order.isDelivered = true;
       order.deliveredAt = Date.now();
+    } else {
+      order.isDelivered = false;
+      order.deliveredAt = undefined;
     }
 
     const updatedOrder = await order.save();
