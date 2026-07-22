@@ -10,22 +10,32 @@ const getOrCreateCart = async (userId) => {
   return cart;
 };
 
+// Helper to populate and remove deleted/null products
+const populateAndCleanCart = async (cart) => {
+  await cart.populate({
+    path: 'items.product',
+    select: 'name slug price discountPrice images stock sku material'
+  });
+
+  const originalLength = cart.items.length;
+  cart.items = cart.items.filter(item => item.product !== null);
+  if (cart.items.length !== originalLength) {
+    await cart.save();
+  }
+  return cart;
+};
+
 // @desc    Get user cart
 // @route   GET /api/cart
 // @access  Private
 exports.getCart = async (req, res, next) => {
   try {
     const cart = await getOrCreateCart(req.user._id);
-    
-    // Populate product details
-    await cart.populate({
-      path: 'items.product',
-      select: 'name slug price discountPrice images stock sku material'
-    });
+    const cleanedCart = await populateAndCleanCart(cart);
 
     res.status(200).json({
       status: 'success',
-      cart
+      cart: cleanedCart
     });
   } catch (err) {
     next(err);
@@ -51,7 +61,7 @@ exports.addToCart = async (req, res, next) => {
     const cart = await getOrCreateCart(req.user._id);
 
     // Check if item is already in cart
-    const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
+    const itemIndex = cart.items.findIndex(item => item.product && item.product.toString() === productId);
 
     if (itemIndex > -1) {
       // Item exists, update quantity
@@ -62,14 +72,11 @@ exports.addToCart = async (req, res, next) => {
     }
 
     await cart.save();
-    await cart.populate({
-      path: 'items.product',
-      select: 'name slug price discountPrice images stock sku material'
-    });
+    const cleanedCart = await populateAndCleanCart(cart);
 
     res.status(200).json({
       status: 'success',
-      cart
+      cart: cleanedCart
     });
   } catch (err) {
     next(err);
@@ -99,7 +106,7 @@ exports.updateCartItemQuantity = async (req, res, next) => {
 
     const cart = await getOrCreateCart(req.user._id);
 
-    const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
+    const itemIndex = cart.items.findIndex(item => item.product && item.product.toString() === productId);
 
     if (itemIndex === -1) {
       return res.status(404).json({ status: 'error', message: 'Item not found in cart' });
@@ -108,14 +115,11 @@ exports.updateCartItemQuantity = async (req, res, next) => {
     cart.items[itemIndex].quantity = Number(quantity);
     await cart.save();
     
-    await cart.populate({
-      path: 'items.product',
-      select: 'name slug price discountPrice images stock sku material'
-    });
+    const cleanedCart = await populateAndCleanCart(cart);
 
     res.status(200).json({
       status: 'success',
-      cart
+      cart: cleanedCart
     });
   } catch (err) {
     next(err);
@@ -130,18 +134,15 @@ exports.removeFromCart = async (req, res, next) => {
     const cart = await getOrCreateCart(req.user._id);
     
     cart.items = cart.items.filter(
-      item => item.product.toString() !== req.params.productid
+      item => item.product && item.product.toString() !== req.params.productid
     );
 
     await cart.save();
-    await cart.populate({
-      path: 'items.product',
-      select: 'name slug price discountPrice images stock'
-    });
+    const cleanedCart = await populateAndCleanCart(cart);
 
     res.status(200).json({
       status: 'success',
-      cart
+      cart: cleanedCart
     });
   } catch (err) {
     next(err);
