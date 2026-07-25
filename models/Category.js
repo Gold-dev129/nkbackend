@@ -23,14 +23,13 @@ const CategorySchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Generate slug before save
-CategorySchema.pre('save', function(next) {
+CategorySchema.pre('save', function() {
   if (this.name) {
     this.slug = this.name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)+/g, '');
   }
-  next();
 });
 
 module.exports = mongoose.model('Category', CategorySchema);

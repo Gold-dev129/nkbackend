@@ -93,7 +93,7 @@ const ProductSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-ProductSchema.pre('save', function(next) {
+ProductSchema.pre('save', function() {
   if (this.name) {
     this.slug = this.name
       .toLowerCase()
@@ -109,10 +109,6 @@ ProductSchema.pre('save', function(next) {
   } else {
     this.discountPercentage = 0;
     this.discountPrice = 0;
-  }
-
-  if (typeof next === 'function') {
-    next();
   }
 });
 
