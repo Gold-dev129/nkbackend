@@ -133,7 +133,8 @@ exports.createProduct = async (req, res, next) => {
       bestSeller,
       newArrival,
       video,
-      isCustom
+      isCustom,
+      colors
     } = req.body;
 
     // Check SKU uniqueness
@@ -162,6 +163,15 @@ exports.createProduct = async (req, res, next) => {
       finalVideo = vidResult.secure_url;
     }
 
+    let finalColors = [];
+    if (colors) {
+      if (typeof colors === 'string') {
+        finalColors = colors.split(',').map(c => c.trim()).filter(c => c !== '');
+      } else if (Array.isArray(colors)) {
+        finalColors = colors.map(c => c.trim()).filter(c => c !== '');
+      }
+    }
+
     const product = await Product.create({
       name,
       description,
@@ -179,7 +189,8 @@ exports.createProduct = async (req, res, next) => {
       newArrival: newArrival === 'true',
       isCustom: isCustom === 'true' || isCustom === true,
       images: imageUrls,
-      video: finalVideo
+      video: finalVideo,
+      colors: finalColors
     });
 
     res.status(201).json({
@@ -238,6 +249,18 @@ exports.updateProduct = async (req, res, next) => {
     if (updateData.bestSeller) updateData.bestSeller = updateData.bestSeller === 'true' || updateData.bestSeller === true;
     if (updateData.newArrival) updateData.newArrival = updateData.newArrival === 'true' || updateData.newArrival === true;
     if (updateData.isCustom !== undefined) updateData.isCustom = updateData.isCustom === 'true' || updateData.isCustom === true;
+
+    // Handle colors update
+    if (req.body.colors !== undefined) {
+      const colorsVal = req.body.colors;
+      let finalColors = [];
+      if (typeof colorsVal === 'string') {
+        finalColors = colorsVal.split(',').map(c => c.trim()).filter(c => c !== '');
+      } else if (Array.isArray(colorsVal)) {
+        finalColors = colorsVal.map(c => c.trim()).filter(c => c !== '');
+      }
+      updateData.colors = finalColors;
+    }
 
     // Handle Image uploads
     if (req.files && req.files.images) {

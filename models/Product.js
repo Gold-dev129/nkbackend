@@ -29,6 +29,10 @@ const ProductSchema = new mongoose.Schema({
     type: [String],
     required: [true, 'Please upload at least one image']
   },
+  colors: {
+    type: [String],
+    default: []
+  },
   price: {
     type: Number,
     required: [true, 'Please add a price']

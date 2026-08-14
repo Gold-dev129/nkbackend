@@ -47,7 +47,7 @@ exports.getCart = async (req, res, next) => {
 // @access  Private
 exports.addToCart = async (req, res, next) => {
   try {
-    const { product: productId, quantity = 1 } = req.body;
+    const { product: productId, quantity = 1, color = '' } = req.body;
 
     const product = await Product.findById(productId);
     if (!product) {
@@ -60,15 +60,17 @@ exports.addToCart = async (req, res, next) => {
 
     const cart = await getOrCreateCart(req.user._id);
 
-    // Check if item is already in cart
-    const itemIndex = cart.items.findIndex(item => item.product && item.product.toString() === productId);
+    // Check if item is already in cart with same product and color
+    const itemIndex = cart.items.findIndex(
+      item => item.product && item.product.toString() === productId && (item.color || '') === color
+    );
 
     if (itemIndex > -1) {
       // Item exists, update quantity
       cart.items[itemIndex].quantity = Number(quantity);
     } else {
       // Item does not exist, add it
-      cart.items.push({ product: productId, quantity: Number(quantity) });
+      cart.items.push({ product: productId, quantity: Number(quantity), color });
     }
 
     await cart.save();
@@ -95,21 +97,25 @@ exports.updateCartItemQuantity = async (req, res, next) => {
       return res.status(400).json({ status: 'error', message: 'Quantity must be at least 1' });
     }
 
-    const product = await Product.findById(productId);
+    const cart = await getOrCreateCart(req.user._id);
+
+    const itemIndex = cart.items.findIndex(item => 
+      (item._id.toString() === productId) || 
+      (item.product && item.product.toString() === productId)
+    );
+
+    if (itemIndex === -1) {
+      return res.status(404).json({ status: 'error', message: 'Item not found in cart' });
+    }
+
+    const actualProductId = cart.items[itemIndex].product;
+    const product = await Product.findById(actualProductId);
     if (!product) {
       return res.status(404).json({ status: 'error', message: 'Product not found' });
     }
 
     if (product.stock < quantity) {
       return res.status(400).json({ status: 'error', message: `Only ${product.stock} items left in stock` });
-    }
-
-    const cart = await getOrCreateCart(req.user._id);
-
-    const itemIndex = cart.items.findIndex(item => item.product && item.product.toString() === productId);
-
-    if (itemIndex === -1) {
-      return res.status(404).json({ status: 'error', message: 'Item not found in cart' });
     }
 
     cart.items[itemIndex].quantity = Number(quantity);
@@ -134,7 +140,7 @@ exports.removeFromCart = async (req, res, next) => {
     const cart = await getOrCreateCart(req.user._id);
     
     cart.items = cart.items.filter(
-      item => item.product && item.product.toString() !== req.params.productid
+      item => item._id.toString() !== req.params.productid && (item.product && item.product.toString() !== req.params.productid)
     );
 
     await cart.save();

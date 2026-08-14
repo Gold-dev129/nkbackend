@@ -54,7 +54,7 @@ const sendWelcomeEmail = async (email, name) => {
         <p>Thank you for registering an account with <strong>NKYLUXURY</strong>. We are thrilled to welcome you into our world of exceptional quality and timeless design.</p>
         <p>From custom-tailored designs to rare collections, we source and craft only the finest gold, silver, and precious stones to bring you luxury that makes a statement.</p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${process.env.FRONTEND_URL}/shop" style="background-color: #000000; color: #D4AF37; padding: 15px 30px; text-decoration: none; font-weight: bold; border: 1px solid #D4AF37; text-transform: uppercase; font-size: 12px; letter-spacing: 2px;">Explore Collections</a>
+          <a href="${process.env.FRONTEND_URL}/#/shop" style="background-color: #000000; color: #D4AF37; padding: 15px 30px; text-decoration: none; font-weight: bold; border: 1px solid #D4AF37; text-transform: uppercase; font-size: 12px; letter-spacing: 2px;">Explore Collections</a>
         </div>
         <p>If you have any questions or require custom consultation, please don't hesitate to contact our private client services.</p>
         <p>Sincerely,<br/><strong>The NKYLUXURY Team</strong></p>
@@ -124,7 +124,7 @@ const sendOrderConfirmationEmail = async (email, name, order) => {
         </div>
 
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${process.env.FRONTEND_URL}/dashboard" style="background-color: #000000; color: #D4AF37; padding: 15px 30px; text-decoration: none; font-weight: bold; border: 1px solid #D4AF37; text-transform: uppercase; font-size: 12px; letter-spacing: 2px;">Track Your Order</a>
+          <a href="${process.env.FRONTEND_URL}/#/dashboard" style="background-color: #000000; color: #D4AF37; padding: 15px 30px; text-decoration: none; font-weight: bold; border: 1px solid #D4AF37; text-transform: uppercase; font-size: 12px; letter-spacing: 2px;">Track Your Order</a>
         </div>
 
         <p>If you need to make any changes to your shipping details, please contact us immediately.</p>
@@ -175,7 +175,7 @@ const sendNewsletterEmail = async (emails, subject, content) => {
         ${content}
         <hr style="border: 0; border-top: 1px solid #E5DCC6; margin: 30px 0;"/>
         <p style="font-size: 11px; text-align: center; color: #999999;">
-          You received this email because you are subscribed to NKYLUXURY. If you wish to unsubscribe, please click <a href="${process.env.FRONTEND_URL}/unsubscribe" style="color: #D4AF37;">here</a>.
+          You received this email because you are subscribed to NKYLUXURY. If you wish to unsubscribe, please click <a href="${process.env.FRONTEND_URL}/#/unsubscribe" style="color: #D4AF37;">here</a>.
         </p>
       </div>
       ${luxuryFooter}
