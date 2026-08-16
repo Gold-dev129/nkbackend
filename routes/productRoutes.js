@@ -23,11 +23,11 @@ router.use(protect);
 router.use(authorize('admin'));
 
 router.post('/', upload.fields([
-  { name: 'images', maxCount: 10 },
+  { name: 'images' },
   { name: 'videoFile', maxCount: 1 }
 ]), createProduct);
 router.put('/:id', upload.fields([
-  { name: 'images', maxCount: 10 },
+  { name: 'images' },
   { name: 'videoFile', maxCount: 1 }
 ]), updateProduct);
 router.delete('/:id', deleteProduct);
